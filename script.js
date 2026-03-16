@@ -106,11 +106,64 @@ document.addEventListener('DOMContentLoaded', function() {
     fileInput.click();
   });
   
+  // Crash analyzer dropzone functionality
+  const crashDropzone = document.querySelector('.tab-content[data-tab="crash"] .file-dropzone');
+  if (crashDropzone) {
+    const crashDropzoneText = crashDropzone.querySelector('p');
+    const crashDropzoneBtn = crashDropzone.querySelector('.btn-primary');
+    
+    // Handle drag and drop events
+    crashDropzone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      this.classList.add('dragover');
+      crashDropzoneText.textContent = 'Suelta el archivo para analizarlo';
+    });
+    
+    crashDropzone.addEventListener('dragleave', function() {
+      this.classList.remove('dragover');
+      crashDropzoneText.textContent = 'Arrastra y suelta archivos de crash (ZIP, RAR, logs) aquí o haz clic para seleccionar';
+    });
+    
+    crashDropzone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.classList.remove('dragover');
+      crashDropzoneText.textContent = 'Arrastra y suelta archivos de crash (ZIP, RAR, logs) aquí o haz clic para seleccionar';
+      
+      const files = e.dataTransfer.files;
+      if (files.length) {
+        handleCrashFile(files[0]);
+      }
+    });
+    
+    // Handle click to select file
+    crashDropzoneBtn.addEventListener('click', function() {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.zip,.rar,.txt,.log';
+      
+      fileInput.onchange = function(e) {
+        if (e.target.files.length) {
+          handleCrashFile(e.target.files[0]);
+        }
+      };
+      
+      fileInput.click();
+    });
+  }
+  
   // Function to handle file processing
   function handleFile(file) {
     // Show loading state
     dropzoneText.textContent = 'Analizando archivo...';
     dropzoneBtn.disabled = true;
+    
+    // Validate file extension
+    const fileName = file.name.toLowerCase();
+    if (!fileName.endsWith('.txt')) {
+      dropzoneText.textContent = 'Formato de archivo no soportado. Suba un archivo .txt de profiler.';
+      dropzoneBtn.disabled = false;
+      return;
+    }
     
     const reader = new FileReader();
     
@@ -143,6 +196,208 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     reader.readAsText(file);
+  }
+  
+  // Function to handle crash file processing
+  function handleCrashFile(file) {
+    const crashDropzone = document.querySelector('.tab-content[data-tab="crash"] .file-dropzone');
+    const crashDropzoneText = crashDropzone.querySelector('p');
+    const crashDropzoneBtn = crashDropzone.querySelector('.btn-primary');
+    
+    // Show loading state
+    crashDropzoneText.textContent = 'Analizando archivo de crash...';
+    crashDropzoneBtn.disabled = true;
+    
+    const fileName = file.name.toLowerCase();
+    
+    if (fileName.endsWith('.zip')) {
+      // Use JSZip to extract
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        JSZip.loadAsync(e.target.result).then(function(zip) {
+          // Collect all text files
+          const textFiles = [];
+          zip.forEach(function(relativePath, zipEntry) {
+            if (!zipEntry.dir && (relativePath.endsWith('.txt') || relativePath.endsWith('.log'))) {
+              textFiles.push(zipEntry);
+            }
+          });
+          
+          if (textFiles.length === 0) {
+            crashDropzoneText.textContent = 'No se encontraron archivos de texto (.txt, .log) dentro del ZIP.';
+            crashDropzoneBtn.disabled = false;
+            return;
+          }
+          
+          // Read each text file
+          const promises = textFiles.map(entry => entry.async('string'));
+          Promise.all(promises).then(function(contents) {
+            const fullContent = contents.join('\n\n--- FILE SEPARATOR ---\n\n');
+            analyzeCrashLogs(fullContent);
+          }).catch(function(err) {
+            console.error('Error reading text files:', err);
+            crashDropzoneText.textContent = 'Error al leer archivos dentro del ZIP.';
+            crashDropzoneBtn.disabled = false;
+          });
+        }).catch(function(err) {
+          console.error('Error loading ZIP:', err);
+          crashDropzoneText.textContent = 'Error al procesar el archivo ZIP. Asegúrate de que sea un archivo válido.';
+          crashDropzoneBtn.disabled = false;
+        });
+      };
+      reader.onerror = function() {
+        crashDropzoneText.textContent = 'Error al leer el archivo ZIP.';
+        crashDropzoneBtn.disabled = false;
+      };
+      reader.readAsArrayBuffer(file);
+    } else if (fileName.endsWith('.rar')) {
+      crashDropzoneText.textContent = 'Archivos RAR no son soportados actualmente. Por favor, extraiga los archivos y suba los logs individuales.';
+      crashDropzoneBtn.disabled = false;
+    } else if (fileName.endsWith('.txt') || fileName.endsWith('.log')) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        analyzeCrashLogs(e.target.result);
+      };
+      reader.onerror = function() {
+        crashDropzoneText.textContent = 'Error al leer el archivo.';
+        crashDropzoneBtn.disabled = false;
+      };
+      reader.readAsText(file);
+    } else {
+      crashDropzoneText.textContent = 'Formato de archivo no soportado. Suba un archivo ZIP, TXT o LOG.';
+      crashDropzoneBtn.disabled = false;
+    }
+  }
+  
+  // Function to analyze crash logs and update UI
+  function analyzeCrashLogs(content) {
+    const crashDropzone = document.querySelector('.tab-content[data-tab="crash"] .file-dropzone');
+    const crashDropzoneText = crashDropzone.querySelector('p');
+    const crashDropzoneBtn = crashDropzone.querySelector('.btn-primary');
+    
+    try {
+      // For now, just display the raw content
+      // Later we can parse crash logs and show detailed panel
+      const crashData = parseCrashLogs(content);
+      updateCrashTab(crashData);
+      switchToTab('crash');
+      crashDropzoneText.textContent = 'Análisis completado. Arrastra otro archivo o haz clic para seleccionar';
+      crashDropzoneBtn.disabled = false;
+    } catch (error) {
+      console.error('Error parsing crash logs:', error);
+      crashDropzoneText.textContent = 'Error al analizar los logs de crash. Asegúrate de que sean válidos.';
+      crashDropzoneBtn.disabled = false;
+    }
+  }
+  
+  // Placeholder crash log parser - currently just extracts basic info
+  function parseCrashLogs(content) {
+    // Simple extraction: find timestamps, error messages, stack traces
+    const lines = content.split('\n');
+    const crashes = [];
+    let currentCrash = null;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      // Example detection: lines starting with "ERROR" or "Exception"
+      if (line.match(/^ERROR:/i) || line.includes('Exception')) {
+        if (currentCrash) crashes.push(currentCrash);
+        currentCrash = { title: line, details: [] };
+      } else if (currentCrash) {
+        currentCrash.details.push(line);
+      }
+    }
+    if (currentCrash) crashes.push(currentCrash);
+    
+    // If no crashes found, treat entire content as a single crash log
+    if (crashes.length === 0) {
+      crashes.push({ title: 'Crash Log', details: lines });
+    }
+    
+    return { crashes: crashes, rawContent: content };
+  }
+  
+  // Function to update the crash tab with analyzed data
+  function updateCrashTab(data) {
+    const crashContent = document.querySelector('.tab-content[data-tab="crash"]');
+    crashContent.innerHTML = `
+      <h1>Crash Analyzer</h1>
+      <div class="file-dropzone">
+        <p>Arrastra y suelta archivos de crash (ZIP, RAR, logs) aquí o haz clic para seleccionar</p>
+        <button class="btn-primary">Seleccionar archivo</button>
+      </div>
+    `;
+    
+    // Add crash summary
+    const summaryDiv = document.createElement('div');
+    summaryDiv.className = 'crash-summary';
+    summaryDiv.innerHTML = `
+      <h2>Resumen de Crashes</h2>
+      <p>Se detectaron ${data.crashes.length} eventos de crash.</p>
+    `;
+    
+    // Add crash details
+    data.crashes.forEach((crash, index) => {
+      const crashDiv = document.createElement('div');
+      crashDiv.className = 'crash-item';
+      crashDiv.innerHTML = `
+        <h3>Crash #${index + 1}: ${crash.title}</h3>
+        <pre>${crash.details.join('\n')}</pre>
+      `;
+      summaryDiv.appendChild(crashDiv);
+    });
+    
+    // Insert after the dropzone
+    const dropzone = crashContent.querySelector('.file-dropzone');
+    crashContent.insertBefore(summaryDiv, dropzone.nextSibling);
+    
+    // Restore dropzone functionality
+    restoreCrashDropzoneFunctionality(crashContent);
+  }
+  
+  // Function to restore crash dropzone functionality after updating content
+  function restoreCrashDropzoneFunctionality(container) {
+    const dropzone = container.querySelector('.file-dropzone');
+    const dropzoneText = dropzone.querySelector('p');
+    const dropzoneBtn = dropzone.querySelector('.btn-primary');
+    
+    // Handle drag and drop events
+    dropzone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      this.classList.add('dragover');
+      dropzoneText.textContent = 'Suelta el archivo para analizarlo';
+    });
+    
+    dropzone.addEventListener('dragleave', function() {
+      this.classList.remove('dragover');
+      dropzoneText.textContent = 'Arrastra y suelta archivos de crash (ZIP, RAR, logs) aquí o haz clic para seleccionar';
+    });
+    
+    dropzone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.classList.remove('dragover');
+      dropzoneText.textContent = 'Arrastra y suelta archivos de crash (ZIP, RAR, logs) aquí o haz clic para seleccionar';
+      
+      const files = e.dataTransfer.files;
+      if (files.length) {
+        handleCrashFile(files[0]);
+      }
+    });
+    
+    // Handle click to select file
+    dropzoneBtn.addEventListener('click', function() {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.zip,.rar,.txt,.log';
+      
+      fileInput.onchange = function(e) {
+        if (e.target.files.length) {
+          handleCrashFile(e.target.files[0]);
+        }
+      };
+      
+      fileInput.click();
+    });
   }
   
   // Function to parse the profiler report

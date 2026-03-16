@@ -54,14 +54,17 @@
           <h1>Profiler Analyzer</h1>
           <p>Contenido del analizador de profiler irá aquí.</p>
           <div class="file-dropzone">
-            <p>Arrastra y suelta archivos de profiler aquí o haz clic para seleccionar</p>
+            <p>Arrastra y suelta archivos de profiler (.txt) aquí o haz clic para seleccionar</p>
             <button class="btn-primary">Seleccionar archivo</button>
           </div>
         </div>
         
         <div class="tab-content" data-tab="crash">
           <h1>Crash Analyzer</h1>
-          <p>Contenido del analizador de cráteres irá aquí.</p>
+          <div class="file-dropzone">
+            <p>Arrastra y suelta archivos de crash (ZIP, RAR, logs) aquí o haz clic para seleccionar</p>
+            <button class="btn-primary">Seleccionar archivo</button>
+          </div>
         </div>
         
         <div class="tab-content" data-tab="top-scripts">
@@ -120,6 +123,7 @@
       </main>
     </div>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="script.js"></script>
   </body>
 </html>
