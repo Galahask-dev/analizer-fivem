@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FiveM Profiler Analyzer</title>
+    <meta name="description" content="Analyze FiveM server profiler files to identify performance bottlenecks and script issues." />
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div id="app">
+      <!-- Navbar -->
+      <nav class="navbar">
+        <div class="navbar-content">
+          <!-- Tabs -->
+          <div class="tabs">
+            <button class="tab active" data-tab="profiler">
+              <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+              Profiler Analyzer
+            </button>
+            <button class="tab" data-tab="crash">
+              <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v2m0 4v.01M12 5h.01M12 19h.01M5 12h2m14 0h2M9 15h.01M9 9h.01m6 6h.01m6-6h.01"></path></svg>
+              Crash Analyzer
+            </button>
+            <button class="tab" data-tab="top-scripts">
+              <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v5a2 2 0 0 1-2 2H3m18 0V5a2 2 0 0 0-2-2h-5"></path><polyline points="3 11 7 15 12 10 12 3"></polyline></svg>
+              Top Script Offenders
+            </button>
+            <button class="tab" data-tab="top-crashes">
+              <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 0 0-5 5v4a5 5 0 0 0 5 5h4a5 5 0 0 0 5-5V7a5 5 0 0 0-5-5z"></path><line x1="12" y1="22" x2="12" y2="12"></line></svg>
+              Top Crash Offenders
+            </button>
+            <button class="tab" data-tab="info">
+              <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><circle cx="12" cy="16" r="1"></circle></svg>
+              Info
+            </button>
+          </div>
+          
+          <!-- Spacer -->
+          <div class="spacer"></div>
+          
+          <!-- GitHub Sync Button -->
+          <button class="github-btn" id="githubBtn">
+            <svg class="github-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+            GitHub sync
+          </button>
+        </div>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <div class="tab-content active" data-tab="profiler">
+          <h1>Profiler Analyzer</h1>
+          <p>Contenido del analizador de profiler irá aquí.</p>
+          <div class="file-dropzone">
+            <p>Arrastra y suelta archivos de profiler aquí o haz clic para seleccionar</p>
+            <button class="btn-primary">Seleccionar archivo</button>
+          </div>
+        </div>
+        
+        <div class="tab-content" data-tab="crash">
+          <h1>Crash Analyzer</h1>
+          <p>Contenido del analizador de cráteres irá aquí.</p>
+        </div>
+        
+        <div class="tab-content" data-tab="top-scripts">
+          <h1>Top Script Offenders</h1>
+          <p>Lista de los scripts que más consumen recursos:</p>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Script</th>
+                  <th>Tiempo (ms)</th>
+                  <th>Llamadas</th>
+                  <th>%</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>resource1.lua</td>
+                  <td>125.4</td>
+                  <td>45</td>
+                  <td>35%</td>
+                </tr>
+                <tr>
+                  <td>resource2.lua</td>
+                  <td>98.2</td>
+                  <td>32</td>
+                  <td>27%</td>
+                </tr>
+                <tr>
+                  <td>resource3.lua</td>
+                  <td>76.8</td>
+                  <td>28</td>
+                  <td>21%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div class="tab-content" data-tab="top-crashes">
+          <h1>Top Crash Offenders</h1>
+          <p>Recursos que causan más cráteres:</p>
+        </div>
+        
+        <div class="tab-content" data-tab="info">
+          <h1>Información</h1>
+          <p>Esta aplicación analiza archivos de profiler de FiveM para identificar cuellos de botella de rendimiento y problemas de scripts.</p>
+          <p>Características:</p>
+          <ul>
+            <li>Análisis de profiler</li>
+            <li>Detección de cráteres</li>
+            <li>Identificación de scripts problemáticos</li>
+            <li>Integración con GitHub para guardar configuraciones</li>
+          </ul>
+        </div>
+      </main>
+    </div>
+    
+    <script src="script.js"></script>
+  </body>
+</html>
